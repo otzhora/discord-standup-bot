@@ -1,10 +1,7 @@
 import asyncio
-import os
+from collections.abc import Sequence
 
 from discord.ext import commands
-from dotenv import load_dotenv
-
-from collections.abc import Sequence
 
 
 def make_sequence(seq):
@@ -39,19 +36,19 @@ def message_check(channel=None, author=None, content=None, ignore_bot=True, lowe
 
 
 class StandupBot(commands.Bot):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, GUILD, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.users_storage = {}  # TODO: create proper storage
         self.standup_channel = None
         self.bg_work = self.loop.create_task(self.collect_standups())
         self.works = []
+        self.GUILD = GUILD
 
     async def on_ready(self):
-        global GUILD
         channels = None
         for guild in self.guilds:
-            if guild.name == GUILD:
+            if guild.name == self.GUILD:
                 channels = guild.channels
 
         for ch in channels:
@@ -118,21 +115,14 @@ class Register(commands.Cog):
     @commands.command(help='Commit to writing standups')
     @commands.has_any_role("гей", "slave master")
     async def register(self, ctx):
-        if ctx.author.id in bot.users_storage:
+        if ctx.author.id in self.bot.users_storage:
             await ctx.send("You are already registered")
             return
-        bot.users_storage[ctx.author.id] = ctx.author
-        bot.works.append(bot.loop.create_task(
-            bot.collect_standup_from_user(ctx.author)))
+        self.bot.users_storage[ctx.author.id] = ctx.author
+        self.bot.works.append(self.bot.loop.create_task(
+            self.bot.collect_standup_from_user(ctx.author)))
 
         await ctx.send("You are committed to writing standups")
 
 
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
 
-bot = StandupBot(command_prefix="!")
-bot.add_cog(Register(bot))
-
-bot.run(TOKEN)
