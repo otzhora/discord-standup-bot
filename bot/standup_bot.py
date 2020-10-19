@@ -3,6 +3,8 @@ from collections.abc import Sequence
 
 from discord.ext import commands
 
+from bot.storage import Storage
+
 
 def make_sequence(seq):
     if seq is None:
@@ -39,7 +41,7 @@ class StandupBot(commands.Bot):
     def __init__(self, GUILD, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.users_storage = {}  # TODO: create proper storage
+        self.users_storage = Storage("users_storage.pickle", self)
         self.standup_channel = None
         self.bg_work = self.loop.create_task(self.collect_standups())
         self.works = []
