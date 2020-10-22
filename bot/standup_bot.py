@@ -52,10 +52,25 @@ class StandupBot(commands.Bot):
         for guild in self.guilds:
             if guild.name == self.GUILD:
                 channels = guild.channels
+                self.guild = guild
 
         for ch in channels:
             if ch.name == "standups":
                 self.standup_channel = ch
+
+
+        for id in self.users_storage.ids:
+            user = await self.fetch_user(id)
+            if user is None:
+                print(f"Cannot fetch user with id: {id}")
+            else:
+                try:
+                    self.users_storage.add_user_to_id(id, user)
+                    self.works.append(self.loop.create_task(
+                        self.collect_standup_from_user(user)))
+
+                except ValueError:
+                    print(f"Cannot add user to id: {id}")
 
     async def collect_standup_from_user(self, user):
         await user.create_dm()
